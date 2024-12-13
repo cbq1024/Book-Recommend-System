@@ -5,6 +5,15 @@ backend/.env
 .fastRequest
 .DS_Store
 
+cache
+.cache
+.temp
+*.local
+
+.idea
+*.iml
+
+
 ### VUE ###
 node_modules/
 dist/
