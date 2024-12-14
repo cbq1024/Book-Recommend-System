@@ -61,7 +61,7 @@ const notificationCount = ref(3)
 const userInfo: UserInfo = {
     username: 'XiaoLiuYa',
     avatar: '/logo.png',
-    email: 'user@example.com',
+    email: 'xiaoliuya@mcdd.email',
     role: 'admin'
 }
 

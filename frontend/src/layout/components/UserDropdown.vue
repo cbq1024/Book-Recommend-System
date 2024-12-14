@@ -15,10 +15,6 @@
             <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-dark ring-1 ring-black ring-opacity-5 divide-y divide-gray-200 dark:divide-gray-700">
                 <div class="px-4 py-3 bg-gray-50 dark:bg-dark">
                     <div class="flex items-center space-x-2">
-                        <p class="text-sm text-gray-900 dark:text-gray-200 font-medium">{{ user.username }}</p>
-                        <Tag :color="user.role === 'admin' ? 'red' : 'green'">
-                            {{ user.role === 'admin' ? '管理员' : '读者' }}
-                        </Tag>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ user.email }}</p>
                 </div>

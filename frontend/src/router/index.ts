@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/home/HomeView.vue'
-import FootBar from '@/components/FootBar.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -66,6 +65,7 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
+    console.log(from.fullPath)
   const isAuthenticated = localStorage.getItem('token') // 这里根据你的实际认证方式修改
   
   // 需要认证的页面
