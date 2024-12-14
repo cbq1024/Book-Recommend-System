@@ -6,4 +6,4 @@
             <span class="text-gray-800 dark:text-gray-100">Recommend</span>
         </router-link>
     </div>
-</template> 
+</template>

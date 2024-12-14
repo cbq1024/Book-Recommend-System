@@ -30,7 +30,10 @@ export const generateComments = (count: number): Comment[] => {
             avatar: avatars[Math.floor(Math.random() * avatars.length)],
             content: contents[Math.floor(Math.random() * contents.length)],
             date: date.toISOString().split('T')[0],
-            expanded: false
+            expanded: false,
+            likes: Math.floor(Math.random() * 50),
+            liked: false,
+            showReplies: false
         })
     }
     return comments

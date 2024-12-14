@@ -23,6 +23,21 @@ export interface Comment {
     content: string
     date: string
     expanded?: boolean
+    likes: number
+    liked?: boolean
+    replies?: Reply[]
+    showReplies: boolean
+}
+
+export interface Reply {
+    id: number
+    username: string
+    avatar: string
+    content: string
+    date: string
+    likes: number
+    liked?: boolean
+    replyTo?: string
 }
 
 export interface CategoryTag {

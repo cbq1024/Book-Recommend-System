@@ -28,10 +28,10 @@
                                 <template v-if="index % 2 === 0">
                                     <img :src="comment.avatar" 
                                          :alt="comment.username" 
-                                         class="w-10 h-10 rounded-full ring-2 ring-primary-100 dark:ring-primary-900"/>
+                                         class="w-8 h-8 rounded-full ring-2 ring-primary-100 dark:ring-primary-900"/>
                                     <div class="flex-1">
-                                        <div class="flex justify-between items-center mb-2">
-                                            <span class="font-medium text-gray-900 dark:text-gray-100">
+                                        <div class="flex justify-between items-center mb-1.5">
+                                            <span class="font-medium text-sm text-gray-900 dark:text-gray-100">
                                                 {{ comment.username }}
                                             </span>
                                             <time class="text-xs text-gray-500">{{ comment.date }}</time>
@@ -45,13 +45,122 @@
                                                 class="text-xs text-primary-500 hover:text-primary-600 mt-2 hover:underline">
                                             {{ comment.expanded ? '收起' : '展开全文' }}
                                         </button>
+                                        <div class="flex justify-end gap-4 mt-2 text-xs text-gray-500">
+                                            <button @click="toggleLike(comment)"
+                                                    class="flex items-center gap-1.5 hover:text-primary-500 
+                                                           transition-all duration-300 group
+                                                           px-2 py-1 rounded-full hover:bg-primary-50 
+                                                           dark:hover:bg-primary-900/20"
+                                                    :class="{'text-primary-500': comment.liked}">
+                                                <LikeOutlined v-if="!comment.liked" 
+                                                              class="transition-transform duration-300 
+                                                                     group-hover:scale-110"/>
+                                                <LikeFilled v-else 
+                                                              class="transition-transform duration-300 
+                                                                     group-hover:scale-110 animate-like"/>
+                                                <span class="transition-all duration-300 
+                                                                 group-hover:font-medium">
+                                                    {{ comment.likes }}
+                                                </span>
+                                            </button>
+                                            
+                                            <button @click="showReplyInput(comment)"
+                                                    class="flex items-center gap-1.5 hover:text-primary-500 
+                                                           transition-all duration-300 group
+                                                           px-2 py-1 rounded-full hover:bg-primary-50 
+                                                           dark:hover:bg-primary-900/20">
+                                                <CommentOutlined class="transition-transform duration-300 
+                                                                       group-hover:scale-110"/>
+                                                <span class="transition-all duration-300 
+                                                                     group-hover:font-medium">回复</span>
+                                            </button>
+
+                                            <button v-if="comment.replies?.length"
+                                                    @click="toggleReplies(comment)"
+                                                    class="flex items-center gap-1.5 hover:text-primary-500 
+                                                           transition-all duration-300 group
+                                                           px-2 py-1 rounded-full hover:bg-primary-50 
+                                                           dark:hover:bg-primary-900/20">
+                                                <CaretRightOutlined :class="{'rotate-90': comment.showReplies}"
+                                                                   class="transition-transform duration-300"/>
+                                                <span>{{ comment.showReplies ? '收起回复' : `查看回复(${comment.replies.length})` }}</span>
+                                            </button>
+                                        </div>
+                                        <div v-if="activeReplyId === comment.id" 
+                                             class="mt-3 animate-fade-in">
+                                            <div class="flex gap-2">
+                                                <input v-model="replyContent"
+                                                       type="text"
+                                                       :placeholder="replyToUsername ? `回复 ${replyToUsername}` : '写下你的回复...'"
+                                                       class="flex-1 px-4 py-2 text-sm rounded-full
+                                                              border border-gray-200 dark:border-dark-300
+                                                              focus:border-primary-500 dark:focus:border-primary-500
+                                                              focus:ring-2 focus:ring-primary-500/20
+                                                              bg-transparent outline-none
+                                                              transition-all duration-300"/>
+                                                <button @click="submitReply(comment)"
+                                                        :disabled="!replyContent.trim()"
+                                                        class="px-4 py-2 text-sm rounded-full
+                                                               bg-gradient-to-r from-primary-500 to-primary-600
+                                                               text-white hover:shadow-lg hover:scale-105
+                                                               disabled:opacity-50 disabled:cursor-not-allowed
+                                                               transition-all duration-300">
+                                                    发送
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div v-if="comment.replies?.length" class="mt-3">
+                                            <div v-if="comment.showReplies" class="space-y-3">
+                                                <TransitionGroup name="reply">
+                                                    <div v-for="reply in comment.replies"
+                                                         :key="reply.id"
+                                                         class="reply-card from-right">
+                                                        <div class="flex items-start gap-2">
+                                                            <img :src="reply.avatar"
+                                                                 :alt="reply.username"
+                                                                 class="w-6 h-6 rounded-full"/>
+                                                            <div class="flex-1">
+                                                                <div class="flex items-center gap-2 flex-wrap">
+                                                                    <span class="font-medium text-sm">{{ reply.username }}</span>
+                                                                    <span v-if="reply.replyTo" 
+                                                                          class="text-xs px-2 py-0.5 rounded-full
+                                                                                 bg-primary-50 dark:bg-primary-900/20
+                                                                                 text-primary-600 dark:text-primary-400">
+                                                                        回复 @{{ reply.replyTo }}
+                                                                    </span>
+                                                                </div>
+                                                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                                    {{ reply.content }}
+                                                                </p>
+                                                                <div class="flex justify-end gap-4 mt-2 text-xs text-gray-500">
+                                                                    <button @click="toggleLike(reply)"
+                                                                            class="flex items-center gap-1.5 hover:text-primary-500 
+                                                                                   transition-all duration-300">
+                                                                        <LikeOutlined v-if="!reply.liked"/>
+                                                                        <LikeFilled v-else class="animate-like"/>
+                                                                        <span>{{ reply.likes }}</span>
+                                                                    </button>
+                                                                    <button @click="replyToUser(reply.username, comment)"
+                                                                            class="flex items-center gap-1.5 hover:text-primary-500 
+                                                                                   transition-all duration-300">
+                                                                        <CommentOutlined/>
+                                                                        <span>回复</span>
+                                                                    </button>
+                                                                    <time class="text-gray-400">{{ reply.date }}</time>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </TransitionGroup>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                                 <template v-else>
                                     <div class="flex-1">
-                                        <div class="flex justify-between items-center mb-2">
+                                        <div class="flex justify-between items-center mb-1.5">
                                             <time class="text-xs text-gray-500">{{ comment.date }}</time>
-                                            <span class="font-medium text-gray-900 dark:text-gray-100">
+                                            <span class="font-medium text-sm text-gray-900 dark:text-gray-100">
                                                 {{ comment.username }}
                                             </span>
                                         </div>
@@ -66,10 +175,120 @@
                                                 {{ comment.expanded ? '收起' : '展开全文' }}
                                             </button>
                                         </div>
+                                        <div class="flex justify-start gap-4 mt-3 text-xs text-gray-500">
+                                            <button @click="toggleLike(comment)"
+                                                    class="flex items-center gap-1.5 hover:text-primary-500 
+                                                           transition-all duration-300 group
+                                                           px-2 py-1 rounded-full hover:bg-primary-50 
+                                                           dark:hover:bg-primary-900/20"
+                                                    :class="{'text-primary-500': comment.liked}">
+                                                <LikeOutlined v-if="!comment.liked" 
+                                                               class="transition-transform duration-300 
+                                                                      group-hover:scale-110"/>
+                                                <LikeFilled v-else 
+                                                               class="transition-transform duration-300 
+                                                                      group-hover:scale-110 animate-like"/>
+                                                <span>{{ comment.likes }}</span>
+                                            </button>
+                                            
+                                            <button @click="showReplyInput(comment)"
+                                                    class="flex items-center gap-1.5 hover:text-primary-500 
+                                                           transition-all duration-300 group
+                                                           px-2 py-1 rounded-full hover:bg-primary-50 
+                                                           dark:hover:bg-primary-900/20">
+                                                <CommentOutlined class="transition-transform duration-300 
+                                                                       group-hover:scale-110"/>
+                                                <span>回复</span>
+                                            </button>
+
+                                            <button v-if="comment.replies?.length"
+                                                    @click="toggleReplies(comment)"
+                                                    class="flex items-center gap-1.5 hover:text-primary-500 
+                                                           transition-all duration-300 group
+                                                           px-2 py-1 rounded-full hover:bg-primary-50 
+                                                           dark:hover:bg-primary-900/20">
+                                                <CaretRightOutlined :class="{'rotate-90': comment.showReplies}"
+                                                                   class="transition-transform duration-300"/>
+                                                <span>{{ comment.showReplies ? '收起回复' : `查看回复(${comment.replies.length})` }}</span>
+                                            </button>
+                                        </div>
+                                        <div v-if="activeReplyId === comment.id" 
+                                             class="mt-3 animate-fade-in">
+                                            <div class="flex flex-row-reverse gap-2">
+                                                <input v-model="replyContent"
+                                                       type="text"
+                                                       placeholder="写下你的回复..."
+                                                       class="flex-1 px-4 py-2 text-sm rounded-full
+                                                              border border-gray-200 dark:border-dark-300
+                                                              focus:border-primary-500 dark:focus:border-primary-500
+                                                              focus:ring-2 focus:ring-primary-500/20
+                                                              bg-transparent outline-none
+                                                              transition-all duration-300"/>
+                                                <button @click="submitReply(comment)"
+                                                        :disabled="!replyContent.trim()"
+                                                        class="px-4 py-2 text-sm rounded-full
+                                                               bg-gradient-to-r from-primary-500 to-primary-600
+                                                               text-white
+                                                               hover:shadow-lg hover:scale-105
+                                                               disabled:opacity-50 disabled:cursor-not-allowed
+                                                               disabled:hover:scale-100 disabled:hover:shadow-none
+                                                               transition-all duration-300">
+                                                    发送
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div v-if="comment.replies?.length" 
+                                             class="mt-3">
+                                            <div v-if="comment.showReplies" class="space-y-3">
+                                                <TransitionGroup v-show="comment.showReplies"
+                                                                name="reply" 
+                                                                class="space-y-3">
+                                                    <div v-for="reply in comment.replies"
+                                                         :key="reply.id"
+                                                         class="reply-card from-right">
+                                                        <div class="flex items-start gap-2">
+                                                            <img :src="reply.avatar"
+                                                                 :alt="reply.username"
+                                                                 class="w-6 h-6 rounded-full"/>
+                                                            <div class="flex-1">
+                                                                <div class="flex items-center gap-2 flex-wrap">
+                                                                    <span class="font-medium text-sm">{{ reply.username }}</span>
+                                                                    <span v-if="reply.replyTo" 
+                                                                          class="text-xs px-2 py-0.5 rounded-full
+                                                                                 bg-primary-50 dark:bg-primary-900/20
+                                                                                 text-primary-600 dark:text-primary-400">
+                                                                        回复 @{{ reply.replyTo }}
+                                                                    </span>
+                                                                </div>
+                                                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                                    {{ reply.content }}
+                                                                </p>
+                                                                <div class="flex justify-end gap-4 mt-2 text-xs text-gray-500">
+                                                                    <button @click="toggleLike(reply)"
+                                                                            class="flex items-center gap-1.5 hover:text-primary-500 
+                                                                                   transition-all duration-300">
+                                                                        <LikeOutlined v-if="!reply.liked"/>
+                                                                        <LikeFilled v-else class="animate-like"/>
+                                                                        <span>{{ reply.likes }}</span>
+                                                                    </button>
+                                                                    <button @click="replyToUser(reply.username, comment)"
+                                                                            class="flex items-center gap-1.5 hover:text-primary-500 
+                                                                                   transition-all duration-300">
+                                                                        <CommentOutlined/>
+                                                                        <span>回复</span>
+                                                                    </button>
+                                                                    <time class="text-gray-400">{{ reply.date }}</time>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </TransitionGroup>
+                                            </div>
+                                        </div>
                                     </div>
                                     <img :src="comment.avatar" 
                                          :alt="comment.username" 
-                                         class="w-10 h-10 rounded-full ring-2 ring-primary-100 dark:ring-primary-900"/>
+                                         class="w-8 h-8 rounded-full ring-2 ring-primary-100 dark:ring-primary-900"/>
                                 </template>
                             </div>
                         </div>
@@ -87,13 +306,13 @@
             </div>
         </div>
 
-        <!-- 回到顶部按钮 -->
+        <!-- 修改回到顶部按钮 -->
         <Transition name="fade">
             <button v-show="showBackToTop"
                     @click="scrollToTop"
-                    class="fixed bottom-6 right-6 p-2 rounded-full 
-                           bg-primary-500/90 hover:bg-primary-600 
-                           text-white shadow-lg hover:shadow-xl
+                    class="absolute bottom-4 right-1/2 translate-x-1/2 p-2 rounded-full 
+                           bg-primary-500/80 hover:bg-primary-500
+                           text-white shadow-md hover:shadow-lg
                            transform transition-all duration-300
                            hover:scale-110 active:scale-95
                            backdrop-blur-sm">
@@ -110,10 +329,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { MessageOutlined, VerticalAlignTopOutlined } from '@ant-design/icons-vue'
+import { ref, computed, nextTick } from 'vue'
+import { MessageOutlined, VerticalAlignTopOutlined, LikeOutlined, LikeFilled, CommentOutlined, CaretRightOutlined } from '@ant-design/icons-vue'
 import { useIntersectionObserver } from '@vueuse/core'
-import type { Book } from '@/views/books/types/book'
+import type { Book, Comment, Reply } from '@/views/books/types/book'
 
 const props = defineProps<{
     book: Book | null
@@ -196,6 +415,67 @@ const scrollToTop = () => {
     })
 }
 
+// 添加互动相关的状态
+const activeReplyId = ref<number | null>(null)
+const replyContent = ref('')
+const replyToUsername = ref<string | null>(null)
+
+// 点赞功能
+const toggleLike = (item: Comment | Reply) => {
+    item.liked = !item.liked
+    item.likes = (item.likes || 0) + (item.liked ? 1 : -1)
+}
+
+// 显示回复输入框
+const showReplyInput = (comment: Comment) => {
+    activeReplyId.value = activeReplyId.value === comment.id ? null : comment.id
+    replyContent.value = ''
+}
+
+// 提交回复
+const submitReply = (comment: Comment) => {
+    if (!replyContent.value.trim()) return
+    
+    const newReply: Reply = {
+        id: Date.now(),
+        username: '当前用户',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=current-user',
+        content: replyContent.value,
+        date: new Date().toISOString().split('T')[0],
+        likes: 0,
+        liked: false,
+        replyTo: replyToUsername.value || comment.username
+    }
+    
+    if (!comment.replies) {
+        comment.replies = []
+    }
+    comment.replies.push(newReply)
+    comment.showReplies = true // 确保回复列表展开
+    
+    replyContent.value = ''
+    replyToUsername.value = null
+    activeReplyId.value = null
+}
+
+// 切换回复列表的折叠状态
+const toggleReplies = async (comment: Comment) => {
+    comment.showReplies = !comment.showReplies
+    await nextTick()
+}
+
+// 回复到指定用户
+const replyToUser = (username: string, comment: Comment) => {
+    replyToUsername.value = username
+    activeReplyId.value = comment.id
+    replyContent.value = ''
+}
+
+// 清除回复到指定用户
+const clearReplyTo = () => {
+    replyToUsername.value = null
+}
+
 defineEmits(['back', 'scroll'])
 </script>
 
@@ -238,14 +518,19 @@ defineEmits(['back', 'scroll'])
 
 /* 评论卡片样式 */
 .comment-card {
-    @apply bg-white dark:bg-dark-100 rounded-lg p-4 shadow-sm
-           hover:shadow-md transition-all duration-300
+    @apply bg-white dark:bg-dark-100 rounded-lg p-3
+           transition-all duration-300
            border border-gray-100 dark:border-dark-300
-           hover:bg-gray-50/50 dark:hover:bg-dark-200/50;
+           hover:border-primary-100 dark:hover:border-primary-900
+           hover:shadow-md hover:shadow-primary-500/5;
 }
 
 .comment-card.from-right {
-    @apply ml-auto;
+    @apply ml-auto max-w-[85%];
+}
+
+.comment-card:not(.from-right) {
+    @apply max-w-[85%];
 }
 
 /* 添加淡入淡出动画 */
@@ -258,5 +543,126 @@ defineEmits(['back', 'scroll'])
 .fade-leave-to {
     opacity: 0;
     transform: translateY(20px) scale(0.9);
+}
+
+/* 添加回复动画 */
+.reply-enter-active,
+.reply-leave-active {
+    transition: all 0.3s ease-in-out;
+    max-height: 500px; /* 设置一个足够大的最大高度 */
+    overflow: hidden;
+}
+
+.reply-enter-from,
+.reply-leave-to {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.reply-enter-to,
+.reply-leave-from {
+    max-height: 500px;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 添加点赞动画 */
+@keyframes like {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+}
+
+.animate-like {
+    animation: like 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 优化回复动画 */
+.reply-enter-active,
+.reply-leave-active {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reply-enter-from,
+.reply-leave-to {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+/* 添加渐入动画 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* 优化回到顶部按钮动画 */
+.fade-enter-active,
+.fade-leave-active {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+    transform: translateX(-30px) scale(0.9);
+}
+
+/* 添加悬浮卡片效果 */
+.comment-card {
+    @apply bg-white dark:bg-dark-100 rounded-lg p-4
+           transition-all duration-300
+           border border-gray-100 dark:border-dark-300
+           hover:border-primary-100 dark:hover:border-primary-900
+           hover:shadow-lg hover:shadow-primary-500/5
+           hover:-translate-y-0.5;
+}
+
+/* 更新回复卡片样式 */
+.reply-card {
+    @apply bg-gray-50 dark:bg-dark-200 rounded-lg p-3
+           transition-all duration-300
+           border border-gray-100 dark:border-dark-300
+           hover:border-primary-100 dark:hover:border-primary-900
+           w-[85%];
+}
+
+.reply-card.from-right {
+    @apply ml-auto;
+}
+
+.reply-card:not(.from-right) {
+    @apply ml-8;
+}
+
+/* 优化回复动画 */
+.reply-enter-active,
+.reply-leave-active {
+    transition: all 0.3s ease-in-out;
+    max-height: 500px;
+    overflow: hidden;
+}
+
+.reply-enter-from,
+.reply-leave-to {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.reply-enter-to,
+.reply-leave-from {
+    max-height: 500px;
+    opacity: 1;
+    transform: translateY(0);
 }
 </style>

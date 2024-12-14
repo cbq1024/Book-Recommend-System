@@ -59,8 +59,8 @@ const notificationCount = ref(3)
 
 // User Info
 const userInfo: UserInfo = {
-    username: 'Felix',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+    username: 'XiaoLiuYa',
+    avatar: '/logo.png',
     email: 'user@example.com',
     role: 'admin'
 }
