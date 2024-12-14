@@ -1,20 +1,8 @@
 <template>
     <div class="container mx-auto px-4 py-6 h-screen flex flex-col gap-4">
-        <!-- 分类标签区域 -->
-        <div class="bg-white dark:bg-dark-100 p-4 rounded-lg shadow-sm">
-            <div class="flex flex-wrap gap-2">
-                <Tag v-for="tag in categoryTags"
-                     :key="tag.name"
-                     :active-class="tag.activeClass"
-                     :count="tag.count">
-                    {{ tag.name }}
-                </Tag>
-            </div>
-        </div>
-
         <!-- 主要内容区域 -->
         <div class="flex gap-6 flex-1 overflow-hidden">
-            <!-- 左侧书籍列表区域 - 调整比例 -->
+            <!-- 左侧书籍列表区域 -->
             <div :class="{'w-2/5': !selectedBook, 'w-1/4': selectedBook}" 
                  class="transition-all duration-300 overflow-y-auto custom-scrollbar">
                 <div class="space-y-4">
@@ -36,18 +24,70 @@
                                      @click="selectBook(book)"
                                      class="book-card"
                                      :class="getBookCardClasses(book)">
-                                    <div class="flex gap-3" :class="{'compact': selectedBook}">
+                                    <!-- 基本信息部分 -->
+                                    <div class="flex gap-3">
                                         <img :src="book.cover" :alt="book.title"
-                                             class="transition-all duration-300 rounded-lg"
-                                             :class="selectedBook ? 'w-12 h-16' : 'w-16 h-24'"/>
-                                        <div class="flex-1">
-                                            <h3 class="text-base font-bold truncate">{{ book.title }}</h3>
-                                            <p v-if="!selectedBook" class="text-sm text-gray-600 dark:text-gray-400">
-                                                {{ book.author }}
-                                            </p>
-                                            <div class="flex items-center">
-                                                <StarFilled class="text-yellow-400 text-xs mr-1"/>
-                                                <span class="text-xs">{{ book.rating }}</span>
+                                             class="transition-all duration-300 rounded-lg shadow-sm"
+                                             :class="selectedBook ? 'w-16 h-20' : 'w-16 h-24'"/>
+                                        <div class="flex-1 flex flex-col justify-between py-0.5">
+                                            <div>
+                                                <h3 class="text-base font-bold truncate mb-1">{{ book.title }}</h3>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                                                    {{ book.author }}
+                                                </p>
+                                                <!-- 评分和标签在同一行 -->
+                                                <div class="flex items-center flex-wrap gap-2">
+                                                    <div class="flex items-center">
+                                                        <StarFilled class="text-yellow-400 text-xs mr-1"/>
+                                                        <span class="text-xs">{{ book.rating }}</span>
+                                                    </div>
+                                                    <!-- 标签列表 -->
+                                                    <div class="flex items-center gap-1 flex-wrap">
+                                                        <span v-for="tag in book.tags" 
+                                                              :key="tag"
+                                                              class="px-1.5 py-0.5 text-[10px] rounded-full
+                                                                     bg-primary-50 dark:bg-primary-900/20
+                                                                     text-primary-600 dark:text-primary-400
+                                                                     border border-primary-100 dark:border-primary-800">
+                                                            {{ tag }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 展开的详细信息 -->
+                                    <div v-if="selectedBook?.id === book.id"
+                                         class="mt-3 pt-3 border-t border-gray-100 dark:border-dark-300 
+                                                grid grid-cols-2 gap-2 animate-fade-in">
+                                        <div v-if="book.publisher" 
+                                             class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                            <BookOutlined class="text-primary-500/70"/>
+                                            <span class="truncate">{{ book.publisher }}</span>
+                                        </div>
+                                        
+                                        <div v-if="book.publishDate" 
+                                             class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                                            <CalendarOutlined class="text-primary-500/70"/>
+                                            <span>{{ book.publishDate }}</span>
+                                        </div>
+                                        
+                                        <!-- 将页数和 ISBN 放在同一行 -->
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-4 col-span-2">
+                                            <div v-if="book.pages" class="flex items-center gap-1.5">
+                                                <FileTextOutlined class="text-primary-500/70"/>
+                                                <span>{{ book.pages }} 页</span>
+                                            </div>
+                                            
+                                            <div v-if="book.isbn" 
+                                                 class="flex items-center gap-1.5 font-mono cursor-pointer group"
+                                                 @click="copyISBN(book.isbn)"
+                                                 title="点击复制 ISBN">
+                                                <BarcodeOutlined class="text-primary-500/70 group-hover:text-primary-600"/>
+                                                <span class="truncate group-hover:text-primary-600">
+                                                    ISBN: {{ book.isbn }}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -64,12 +104,59 @@
                 </div>
             </div>
 
-            <!-- 右侧评论区域 - 调整比例 -->
+            <!-- 右侧区域：包含分类标签、简介和评论 -->
             <div :class="{'w-3/5': !selectedBook, 'w-3/4': selectedBook}"
-                 class="transition-all duration-300">
-                <CommentsSection 
+                 class="transition-all duration-300 flex flex-col gap-3 h-full">
+                <!-- 分类标签区域 -->
+                <div class="bg-white dark:bg-dark-200 rounded-lg shadow-sm 
+                            backdrop-blur-sm border border-gray-100 dark:border-dark-300
+                            flex-shrink-0 transition-all duration-300"
+                     :class="[isHeaderCollapsed ? 'py-2' : 'py-2.5']">
+                    <div class="px-4 flex items-center">
+                        <h2 class="text-sm font-medium text-gray-800 dark:text-gray-200 
+                                   flex items-center gap-1.5">
+                            <TagsOutlined class="text-primary-500"/>
+                            图书分类
+                        </h2>
+                    </div>
+                    <div class="px-4 pt-2">
+                        <div class="flex flex-wrap gap-1.5">
+                            <!-- 全部标签 -->
+                            <Tag name="全部"
+                                 :active-class="'bg-gradient-to-r from-primary-500 to-primary-600'"
+                                 :count="books.length"
+                                 :selected="selectedCategory === null"
+                                 @click="toggleCategory(null)"
+                                 class="animate-fade-in-up"
+                                 :style="{ animationDelay: `${0 * 50}ms` }"/>
+                            
+                            <!-- 分类标签 -->
+                            <Tag v-for="(tag, index) in categoryTags"
+                                 :key="tag.name"
+                                 :name="tag.name"
+                                 :active-class="tag.activeClass"
+                                 :count="tag.count"
+                                 :selected="selectedCategory === tag.name"
+                                 @click="toggleCategory(tag.name)"
+                                 class="animate-fade-in-up"
+                                 :style="{ animationDelay: `${(index + 1) * 50}ms` }"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 内容简介和标签 -->
+                <BookSummary 
                     :book="selectedBook"
-                    @back="unselectBook"/>
+                    :is-collapsed="isHeaderCollapsed"
+                    @expand="isHeaderCollapsed = false"/>
+
+                <!-- 评论区域 -->
+                <div class="flex-1 overflow-hidden">
+                    <CommentsSection 
+                        :book="selectedBook"
+                        @back="unselectBook"
+                        @scroll="handleScroll"/>
+                </div>
             </div>
         </div>
     </div>
@@ -77,11 +164,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { StarFilled } from '@ant-design/icons-vue'
+import { StarFilled, TagsOutlined, BookOutlined, CalendarOutlined, FileTextOutlined, BarcodeOutlined } from '@ant-design/icons-vue'
 import CommentsSection from "./components/CommentsSection.vue"
 import Tag from '@/components/common/Tag.vue'
 import { generateComments } from './utils/mockData'
 import type { Book, Comment, CategoryTag } from './types/book'
+import BookSummary from './components/BookSummary.vue'
 
 // 1. 首先定义类型
 interface Book {
@@ -120,28 +208,28 @@ interface CategoryTag {
 const getTagColor = (category: string): string => {
     const colors: Record<string, string> = {
         // 主要分类
-        '编程': 'bg-blue-500',
-        '设计': 'bg-purple-500',
-        '数据科学': 'bg-green-500',
-        '人工智能': 'bg-indigo-500',
+        '编程': 'bg-gradient-to-r from-blue-500 to-blue-600',
+        '设计': 'bg-gradient-to-r from-purple-500 to-purple-600',
+        '数据科学': 'bg-gradient-to-r from-green-500 to-green-600',
+        '人工智能': 'bg-gradient-to-r from-indigo-500 to-indigo-600',
         
         // 技术栈
-        'JavaScript': 'bg-yellow-500',
-        'Python': 'bg-blue-400',
-        'Web开发': 'bg-pink-500',
-        '机器学习': 'bg-violet-500',
+        'JavaScript': 'bg-gradient-to-r from-yellow-500 to-yellow-600',
+        'Python': 'bg-gradient-to-r from-blue-400 to-blue-500',
+        'Web开发': 'bg-gradient-to-r from-pink-500 to-pink-600',
+        '机器学习': 'bg-gradient-to-r from-violet-500 to-violet-600',
         
         // 专业领域
-        '系统编程': 'bg-red-500',
-        '数据分析': 'bg-teal-500',
-        '设计模式': 'bg-orange-500',
-        'UI/UX': 'bg-cyan-500',
+        '系统编程': 'bg-gradient-to-r from-red-500 to-red-600',
+        '数据分析': 'bg-gradient-to-r from-teal-500 to-teal-600',
+        '设计模式': 'bg-gradient-to-r from-orange-500 to-orange-600',
+        'UI/UX': 'bg-gradient-to-r from-cyan-500 to-cyan-600',
         
         // 其他分类
-        '文学': 'bg-yellow-500',
-        '历史': 'bg-red-500'
+        '文学': 'bg-gradient-to-r from-yellow-500 to-yellow-600',
+        '历史': 'bg-gradient-to-r from-red-500 to-red-600'
     }
-    return colors[category] || 'bg-gray-500'
+    return colors[category] || 'bg-gradient-to-r from-gray-500 to-gray-600'
 }
 
 // 3. 定义图书数据
@@ -214,7 +302,7 @@ const books = ref<Book[]>([
         rating: 4.9,
         tags: ['人工智能', '计算机科学'],
         category: '人工智能',
-        summary: '本书从程序员的视角详细阐述计算机系统的本质概念，并展示这些概念如何实实在在地影响应用程序的正确性、性能和实用性。全书以程序员关心的问题作为出发点，致力于解释程序是如何映射到系统上，以及程序是如何执行的。',
+        summary: '本书从程序员的视角详细阐述计算机系统的本质概念，并展示这些概念如何实实在地影响应用程序的正确性、性能和实用性。全书以程序员关心的问题作为出发点，致力于解释程序是如何映射到系统上，以及程序是如何执行的。',
         comments: generateComments(20),
         publisher: '机械工业出版社',
         publishDate: '2016-11',
@@ -329,9 +417,14 @@ const categoryTags = computed(() => {
 
 // 7. 简化分组图书计算属性
 const groupedBooks = computed(() => {
+    // 首先过滤书籍
+    const filteredBooks = selectedCategory.value
+        ? books.value.filter(book => book.category === selectedCategory.value)
+        : books.value
+
     // 按分类分组
     const groupedByCategory = new Map<string, Book[]>()
-    books.value.forEach(book => {
+    filteredBooks.forEach(book => {
         if (!groupedByCategory.has(book.category)) {
             groupedByCategory.set(book.category, [])
         }
@@ -395,6 +488,39 @@ const getBookCardClasses = (book: Book) => ({
     'scale-[1.03] shadow-lg': selectedBook.value?.id === book.id
 })
 
+const selectedCategory = ref<string | null>(null)
+
+// 添加切换分类的方法
+const toggleCategory = (category: string | null) => {
+    selectedCategory.value = selectedCategory.value === category ? null : category
+}
+
+// 添加折叠状态控制
+const isHeaderCollapsed = ref(false)
+
+// 处理滚动事件
+const handleScroll = (event: Event) => {
+    const target = event.target as HTMLElement
+    const scrollTop = target.scrollTop
+    
+    // 当滚动超过一定距离时折叠头部
+    if (scrollTop > 50 && !isHeaderCollapsed.value) {
+        isHeaderCollapsed.value = true
+    } else if (scrollTop <= 50 && isHeaderCollapsed.value) {
+        isHeaderCollapsed.value = false
+    }
+}
+
+// 在 script setup 部分添加复制 ISBN 的函数
+const copyISBN = async (isbn: string) => {
+    try {
+        await navigator.clipboard.writeText(isbn)
+        // 这里可以添加一个提示，表示复制成功
+    } catch (err) {
+        console.error('Failed to copy ISBN:', err)
+    }
+}
+
 </script>
 
 <style scoped>
@@ -418,22 +544,30 @@ const getBookCardClasses = (book: Book) => ({
     border-radius: 9999px;
 }
 
-/* 更新图书卡片动画效果 */
+/* 更新书籍卡片样式 */
 .book-card {
-    @apply bg-white dark:bg-dark-100 rounded-lg p-3
+    @apply bg-white dark:bg-dark-100 rounded-lg p-4
            transition-all duration-300 cursor-pointer
            border border-transparent
            hover:border-primary-100 dark:hover:border-primary-900/30
-           hover:shadow-lg
-           relative
-           animate-fade-in;
+           hover:shadow-md
+           relative;
 }
 
-/* 添加渐入动画 */
+/* 选中状态的卡片样式 */
+.book-card.selected {
+    @apply border-primary-500/30 dark:border-primary-500/30
+           bg-gradient-to-br from-primary-50/90 via-primary-50/50 to-white
+           dark:from-primary-900/20 dark:via-primary-900/10 dark:to-dark-100
+           shadow-md
+           transform scale-[1.02];
+}
+
+/* 详细信息的渐入动画 */
 @keyframes fade-in {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(5px);
     }
     to {
         opacity: 1;
@@ -442,38 +576,16 @@ const getBookCardClasses = (book: Book) => ({
 }
 
 .animate-fade-in {
-    animation: fade-in 0.3s ease-out;
+    animation: fade-in 0.3s ease-out forwards;
 }
 
-/* 优化选中状态 */
-.book-card.selected {
-    @apply border-primary-500/30 dark:border-primary-500/30
-           bg-gradient-to-br from-primary-50/90 via-primary-50/50 to-white
-           dark:from-primary-900/20 dark:via-primary-900/10 dark:to-dark-100
-           shadow-lg shadow-primary-500/10
-           transform -translate-y-1 scale-[1.02]
-           ring-1 ring-primary-500/20 ring-offset-2 ring-offset-white 
-           dark:ring-offset-dark-100;
+/* 图标悬浮效果 */
+.book-card.selected .text-primary-500\/70 {
+    @apply transition-transform duration-300;
 }
 
-/* 添加选中时的左侧装饰 */
-.book-card.selected::before {
-    content: '';
-    @apply absolute left-0 top-2 bottom-2 w-1
-           bg-primary-500/50 rounded-full
-           shadow-sm shadow-primary-500/30;
-}
-
-/* 添加选中时的光晕效果 */
-.book-card.selected::after {
-    content: '';
-    @apply absolute inset-0 rounded-lg
-           bg-gradient-to-r from-primary-500/5 to-transparent
-           opacity-0 transition-opacity duration-300;
-}
-
-.book-card.selected:hover::after {
-    @apply opacity-100;
+.book-card.selected:hover .text-primary-500\/70 {
+    @apply transform scale-110;
 }
 
 /* 标签动画效果 */
@@ -522,5 +634,53 @@ const getBookCardClasses = (book: Book) => ({
     @apply inline-flex items-center justify-center
            min-w-[1.2em] h-[1.2em]
            rounded-full;
+}
+
+/* 添加新的动画效果 */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.5s ease-out forwards;
+}
+
+/* 添加书籍卡片的动画 */
+.book-card {
+    animation: fade-in-up 0.5s ease-out forwards;
+}
+
+/* 优化书籍卡片的悬浮效果 */
+.book-card:hover {
+    transform: translateY(-4px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 添加列表切换动画 */
+.book-list-enter-active,
+.book-list-leave-active {
+    transition: all 0.5s ease;
+}
+
+.book-list-enter-from,
+.book-list-leave-to {
+    opacity: 0;
+    transform: translateX(30px);
+}
+
+/* 添加标签切换动画 */
+.tag-item {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tag-item:hover {
+    transform: translateY(-2px);
 }
 </style>
