@@ -1,2 +1,4 @@
 @import './tailwind.css';
 @import 'vue-amazing-ui/css';
+@import '@fortawesome/fontawesome-free/css/all.css';
+

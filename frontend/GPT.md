@@ -1,3 +1,39 @@
+我正在创建一个 优质图书推荐系统的前端页面这是我使用到的依赖
+
+```shell
+"dependencies": {
+"@fortawesome/fontawesome-free": "^6.7.1",
+"@headlessui/vue": "^1.7.23",
+"pinia": "^2.2.6",
+"vue": "^3.5.13",
+"vue-amazing-ui": "^1.10.4",
+"vue-router": "^4.4.5"
+},
+"devDependencies": {
+"@ant-design/icons-vue": "^7.0.1",
+"@tailwindcss/aspect-ratio": "^0.4.2",
+"@tailwindcss/forms": "^0.5.9",
+"@tailwindcss/typography": "^0.5.15",
+"@tsconfig/node22": "^22.0.0",
+"@types/node": "^22.9.3",
+"@vitejs/plugin-vue": "^5.2.1",
+"@vitejs/plugin-vue-jsx": "^4.1.1",
+"@vue/tsconfig": "^0.7.0",
+"autoprefixer": "^10.4.20",
+"npm-run-all2": "^7.0.1",
+"postcss": "^8.4.49",
+"tailwindcss": "^3.4.16",
+"typescript": "~5.6.3",
+"vite": "^6.0.1",
+"vite-plugin-vue-devtools": "^7.6.5",
+"vue-tsc": "^2.1.10"
+},
+"packageManager": "pnpm@9.14.4+sha512.c8180b3fbe4e4bca02c94234717896b5529740a6cbadf19fa78254270403ea2f27d4e1d46a08a0f56c89b63dc8ebfd3ee53326da720273794e6200fcf0d184ab"
+```
+
+这是当前路由结构
+
+```shell
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/home/HomeView.vue'
 
@@ -88,3 +124,7 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
+
+```
+
+接下来为其创建 完善图书页面相关组件 BooksView.vue，并使用 TailwindCSS 进行样式设计，请提供代码。
