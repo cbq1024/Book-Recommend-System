@@ -1,0 +1,65 @@
+<template>
+    <div class="relative">
+        <button @click="toggleMenu" class="flex items-center space-x-2 focus:outline-none group">
+            <img :src="user.avatar" :alt="user.username" class="h-7 w-7 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-500 transition-colors duration-200">
+            <span class="hidden sm:flex sm:items-center sm:space-x-2">
+                <span class="text-sm text-gray-800 dark:text-gray-200 font-medium">{{ user.username }}</span>
+                <Tag :color="user.role === 'admin' ? 'red' : 'green'">
+                    {{ user.role === 'admin' ? '管理员' : '读者' }}
+                </Tag>
+            </span>
+            <i class="fas fa-chevron-down text-gray-500 dark:text-gray-400 text-xs transition-transform duration-200" :class="{ 'rotate-180': isOpen }"></i>
+        </button>
+
+        <TransitionRoot appear :show="isOpen">
+            <div class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-dark ring-1 ring-black ring-opacity-5 divide-y divide-gray-200 dark:divide-gray-700">
+                <div class="px-4 py-3 bg-gray-50 dark:bg-dark">
+                    <div class="flex items-center space-x-2">
+                        <p class="text-sm text-gray-900 dark:text-gray-200 font-medium">{{ user.username }}</p>
+                        <Tag :color="user.role === 'admin' ? 'red' : 'green'">
+                            {{ user.role === 'admin' ? '管理员' : '读者' }}
+                        </Tag>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ user.email }}</p>
+                </div>
+                <div class="py-1">
+                    <UserMenuItem v-for="item in menuItems" :key="item.path" v-bind="item" />
+                </div>
+                <div class="py-1">
+                    <a href="#" @click="onLogout" class="group flex items-center px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <i class="fas fa-sign-out-alt mr-3"></i>
+                        退出登录
+                    </a>
+                </div>
+            </div>
+        </TransitionRoot>
+    </div>
+</template>
+
+<script lang="ts" setup>
+import { ref } from 'vue'
+import { TransitionRoot } from '@headlessui/vue'
+import type { MenuItem, UserInfo } from '../types/navbar'
+import UserMenuItem from './UserMenuItem.vue'
+import Tag from './Tag.vue'
+
+const props = defineProps<{
+    user: UserInfo
+    menuItems: MenuItem[]
+}>()
+
+const emit = defineEmits<{
+    (e: 'logout'): void
+}>()
+
+const isOpen = ref(false)
+
+const toggleMenu = () => {
+    isOpen.value = !isOpen.value
+}
+
+const onLogout = () => {
+    isOpen.value = false
+    emit('logout')
+}
+</script> 
