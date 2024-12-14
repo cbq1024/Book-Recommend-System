@@ -69,8 +69,7 @@ const userInfo: UserInfo = {
 const navigationLinks: NavigationLink[] = [
     { path: '/', icon: 'fas fa-home', text: '首页' },
     { path: '/books', icon: 'fas fa-book', text: '图书库' },
-    { path: '/recommend', icon: 'fas fa-star', text: '推荐' },
-    { path: '/categories', icon: 'fas fa-th-large', text: '分类' }
+    { path: '/recommend', icon: 'fas fa-star', text: '推荐' }
 ]
 
 // User Menu Items

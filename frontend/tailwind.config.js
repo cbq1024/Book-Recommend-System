@@ -28,6 +28,9 @@ module.exports = {
                     900: '#0c4a6e',
                     950: '#082f49',
                 },
+                secondary: {
+                    DEFAULT: '#10B981',
+                },
             },
             backgroundImage: {
                 'dark-gradient': 'linear-gradient(to bottom, #171718, #1c1c1d)',
@@ -67,6 +70,13 @@ module.exports = {
                     '50%': { transform: 'scale(1.02)' },
                     '100%': { transform: 'scale(1)', opacity: '1' },
                 },
+            },
+            spacing: {
+                'card': '1.25rem',
+                'section': '2rem',
+            },
+            borderRadius: {
+                'card': '0.75rem',
             }
         },
     },

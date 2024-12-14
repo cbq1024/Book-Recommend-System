@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/home/HomeView.vue'
+import FootBar from '@/components/FootBar.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -19,11 +20,6 @@ const router = createRouter({
       path: '/recommend',
       name: 'recommend',
       component: () => import('@/views/recommend/RecommendView.vue'),
-    },
-    {
-      path: '/categories',
-      name: 'categories',
-      component: () => import('@/views/categories/CategoriesView.vue'),
     },
     // 用户相关路由
     {
