@@ -19,10 +19,15 @@
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ user.email }}</p>
                 </div>
                 <div class="py-1">
-                    <UserMenuItem v-for="item in menuItems" :key="item.path" v-bind="item" />
+                    <UserMenuItem 
+                        v-for="item in menuItems" 
+                        :key="item.path" 
+                        v-bind="item" 
+                        @click="closeMenu"
+                    />
                 </div>
                 <div class="py-1">
-                    <a href="#" @click="onLogout" class="group flex items-center px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <a href="#" @click.prevent="onLogout" class="group flex items-center px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                         <i class="fas fa-sign-out-alt mr-3"></i>
                         退出登录
                     </a>
@@ -33,7 +38,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { TransitionRoot } from '@headlessui/vue'
 import type { MenuItem, UserInfo } from '../types/navbar'
 import UserMenuItem from './UserMenuItem.vue'
@@ -48,14 +54,42 @@ const emit = defineEmits<{
     (e: 'logout'): void
 }>()
 
+const router = useRouter()
 const isOpen = ref(false)
+
+// 关闭菜单
+const closeMenu = () => {
+    isOpen.value = false
+}
 
 const toggleMenu = () => {
     isOpen.value = !isOpen.value
 }
 
 const onLogout = () => {
-    isOpen.value = false
+    closeMenu()
     emit('logout')
 }
+
+// 监听路由变化
+const unwatch = router.afterEach(() => {
+    closeMenu()
+})
+
+// 点击外部关闭菜单
+const handleClickOutside = (event: MouseEvent) => {
+    const target = event.target as HTMLElement
+    if (!target.closest('.relative')) {
+        closeMenu()
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
+    unwatch() // 清理路由监听
+})
 </script> 

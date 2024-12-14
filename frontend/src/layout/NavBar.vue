@@ -90,7 +90,7 @@ const toggleDarkMode = () => {
 
 const handleLogout = async () => {
     // Implement logout logic here
-    await router.push('/login')
+    await router.push('auth/login')
 }
 
 onMounted(() => {
